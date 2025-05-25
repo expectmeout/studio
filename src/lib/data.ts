@@ -10,6 +10,8 @@ export type Call = {
   appointmentBooked: boolean;
   rating: number; // 1-5, 0 if not rated
   callTime: Date;
+  transcript: string | null;
+  recordingUrl: string | null;
 };
 
 // Type for Supabase row, reflecting the new schema
@@ -17,7 +19,7 @@ type DbCall = {
   id: string;
   summary: string | null;
   transcript: string | null;
-  recording_url: string | null;
+  recording_url: string | null; // Matches your Supabase column
   start_time: string; // Supabase returns timestamp as string
   end_time: string | null;
   duration: number;
@@ -49,6 +51,8 @@ const mapDbCallToCall = (dbCall: DbCall): Call => {
     appointmentBooked: dbCall.appointment_booked,
     rating: dbCall.rating,
     callTime: new Date(dbCall.start_time), // Use start_time for callTime
+    transcript: dbCall.transcript,
+    recordingUrl: dbCall.recording_url,
   };
 };
 
@@ -129,4 +133,3 @@ export const getCallVolumeLastWeek = (callsLastWeek: Call[]): { date: string; ca
   
   return Object.entries(dailyCounts).map(([date, count]) => ({ date, calls: count }));
 };
-

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -11,6 +12,15 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -35,6 +45,7 @@ import {
   Star,
   ChevronDown,
   ListFilter,
+  FileText,
 } from "lucide-react";
 import type { Call } from "@/lib/data";
 import { formatDuration } from "@/lib/data";
@@ -44,7 +55,7 @@ interface CallDataTableProps {
   calls: Call[];
 }
 
-type SortKey = keyof Call | null;
+type SortKey = keyof Call | 'actions' | null; // Added 'actions' as a possible key though it won't be sortable
 type SortDirection = "asc" | "desc";
 
 const CallTypeIcon = ({ type }: { type: Call["callType"] }) => {
@@ -83,8 +94,16 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     appointmentBooked: ('Yes' | 'No')[];
   }>({ callType: [], appointmentBooked: []});
 
+  const [selectedCall, setSelectedCall] = React.useState<Call | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
+
+  const handleViewDetails = (call: Call) => {
+    setSelectedCall(call);
+    setIsDetailModalOpen(true);
+  };
 
   const handleSort = (key: SortKey) => {
+    if (key === 'actions') return; // Actions column is not sortable
     if (sortKey === key) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -114,10 +133,10 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
       );
     }
 
-    if (sortKey) {
+    if (sortKey && sortKey !== 'actions') {
       filteredCalls.sort((a, b) => {
-        const valA = a[sortKey];
-        const valB = b[sortKey];
+        const valA = a[sortKey as keyof Call]; // Type assertion
+        const valB = b[sortKey as keyof Call]; // Type assertion
 
         if (valA === null || valA === undefined) return 1;
         if (valB === null || valB === undefined) return -1;
@@ -149,6 +168,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
 
 
   const renderSortIcon = (key: SortKey) => {
+    if (key === 'actions') return null; // No sort icon for actions
     if (sortKey === key) {
       return sortDirection === "asc" ? <ArrowUpDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" /> : <ArrowUpDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" />;
     }
@@ -169,6 +189,15 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     )},
     { key: "rating", label: "Rating", render: (call) => call.rating > 0 ? <RatingStars rating={call.rating} /> : <span className="text-muted-foreground">N/A</span>},
     { key: "callTime", label: "Call Time", render: (call) => format(call.callTime, "MMM d, yyyy HH:mm"), headerClassName: "w-[200px]" },
+    { 
+      key: "actions", 
+      label: "Actions", 
+      render: (call: Call) => (
+        <Button variant="outline" size="sm" onClick={() => handleViewDetails(call)}>
+          <FileText className="mr-2 h-4 w-4" /> View
+        </Button>
+      )
+    },
   ];
 
   return (
@@ -222,10 +251,14 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
               <TableRow>
                 {columns.map(col => (
                   <TableHead key={String(col.key)} className={col.headerClassName}>
-                    <Button variant="ghost" onClick={() => handleSort(col.key)} className="group px-0 hover:bg-transparent">
-                      {col.label}
-                      {renderSortIcon(col.key)}
-                    </Button>
+                     {col.key === 'actions' ? (
+                        <span className="px-0">{col.label}</span>
+                      ) : (
+                        <Button variant="ghost" onClick={() => handleSort(col.key)} className="group px-0 hover:bg-transparent">
+                          {col.label}
+                          {renderSortIcon(col.key)}
+                        </Button>
+                      )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -257,6 +290,44 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
             </div>
         </div>
       </CardContent>
+
+      {selectedCall && (
+        <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Call Details: {selectedCall.phoneNumber}</DialogTitle>
+              <DialogDescription>
+                Transcript and recording for the call on {format(selectedCall.callTime, "PPpp")}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 flex-grow overflow-y-auto">
+              {selectedCall.transcript ? (
+                <div>
+                  <h4 className="font-semibold mb-2 text-foreground">Transcript:</h4>
+                  <ScrollArea className="h-[200px] w-full rounded-md border p-4 bg-muted/20">
+                    <pre className="text-sm whitespace-pre-wrap text-foreground">{selectedCall.transcript}</pre>
+                  </ScrollArea>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No transcript available for this call.</p>
+              )}
+              {selectedCall.recordingUrl ? (
+                <div className="mt-4">
+                  <h4 className="font-semibold mb-2 text-foreground">Recording:</h4>
+                  <audio controls src={selectedCall.recordingUrl} className="w-full">
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              ) : (
+                <p className="mt-4 text-muted-foreground">No recording available for this call.</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 }
