@@ -1,3 +1,4 @@
+
 import { subDays, format, startOfDay, endOfDay } from 'date-fns';
 import { supabase } from './supabaseClient';
 
@@ -11,26 +12,45 @@ export type Call = {
   callTime: Date;
 };
 
-// Type for Supabase row (assuming snake_case)
+// Type for Supabase row, reflecting the new schema
 type DbCall = {
   id: string;
-  phone_number: string;
+  summary: string | null;
+  transcript: string | null;
+  recording_url: string | null;
+  start_time: string; // Supabase returns timestamp as string
+  end_time: string | null;
   duration: number;
-  call_type: 'Incoming' | 'Outgoing' | 'Missed';
+  from_number: string | null;
+  to_number: string | null;
+  agent_id: string | null;
   appointment_booked: boolean;
   rating: number;
-  call_time: string; // Supabase returns timestamp as string
+  call_type: 'Incoming' | 'Outgoing' | 'Missed';
+  call_reason: string | null;
+  created_at: string; // Supabase returns timestamp as string
+  user_sentiment: string | null;
 };
 
-const mapDbCallToCall = (dbCall: DbCall): Call => ({
-  id: dbCall.id,
-  phoneNumber: dbCall.phone_number,
-  duration: dbCall.duration,
-  callType: dbCall.call_type,
-  appointmentBooked: dbCall.appointment_booked,
-  rating: dbCall.rating,
-  callTime: new Date(dbCall.call_time),
-});
+const mapDbCallToCall = (dbCall: DbCall): Call => {
+  let derivedPhoneNumber = '';
+  if (dbCall.call_type === 'Outgoing') {
+    derivedPhoneNumber = dbCall.to_number || 'Unknown';
+  } else {
+    // Incoming or Missed
+    derivedPhoneNumber = dbCall.from_number || 'Unknown';
+  }
+
+  return {
+    id: dbCall.id,
+    phoneNumber: derivedPhoneNumber,
+    duration: dbCall.duration,
+    callType: dbCall.call_type,
+    appointmentBooked: dbCall.appointment_booked,
+    rating: dbCall.rating,
+    callTime: new Date(dbCall.start_time), // Use start_time for callTime
+  };
+};
 
 /**
  * Fetches calls from Supabase within the last N days.
@@ -40,11 +60,14 @@ const mapDbCallToCall = (dbCall: DbCall): Call => ({
 export const fetchAllCalls = async (periodInDays: number = 30): Promise<Call[]> => {
   const dateLimit = subDays(new Date(), periodInDays);
 
+  // Select all the new columns from the Supabase table
+  const columnsToSelect = 'id, summary, transcript, recording_url, start_time, end_time, duration, from_number, to_number, agent_id, appointment_booked, rating, call_type, call_reason, created_at, user_sentiment';
+
   const { data, error } = await supabase
     .from('calls') // Assuming your table is named 'calls'
-    .select('id, phone_number, duration, call_type, appointment_booked, rating, call_time')
-    .gte('call_time', dateLimit.toISOString())
-    .order('call_time', { ascending: false });
+    .select(columnsToSelect)
+    .gte('start_time', dateLimit.toISOString()) // Filter by start_time
+    .order('start_time', { ascending: false }); // Order by start_time
 
   if (error) {
     console.error('Error fetching calls from Supabase:', error);
@@ -106,3 +129,4 @@ export const getCallVolumeLastWeek = (callsLastWeek: Call[]): { date: string; ca
   
   return Object.entries(dailyCounts).map(([date, count]) => ({ date, calls: count }));
 };
+
