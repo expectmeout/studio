@@ -1,4 +1,5 @@
-import { subDays, format } from 'date-fns';
+import { subDays, format, startOfDay, endOfDay } from 'date-fns';
+import { supabase } from './supabaseClient';
 
 export type Call = {
   id: string;
@@ -10,34 +11,53 @@ export type Call = {
   callTime: Date;
 };
 
-const generateRandomPhoneNumber = (): string => {
-  return `(${Math.floor(Math.random() * 900) + 100}) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`;
+// Type for Supabase row (assuming snake_case)
+type DbCall = {
+  id: string;
+  phone_number: string;
+  duration: number;
+  call_type: 'Incoming' | 'Outgoing' | 'Missed';
+  appointment_booked: boolean;
+  rating: number;
+  call_time: string; // Supabase returns timestamp as string
 };
 
-const callTypes: Call['callType'][] = ['Incoming', 'Outgoing', 'Missed'];
+const mapDbCallToCall = (dbCall: DbCall): Call => ({
+  id: dbCall.id,
+  phoneNumber: dbCall.phone_number,
+  duration: dbCall.duration,
+  callType: dbCall.call_type,
+  appointmentBooked: dbCall.appointment_booked,
+  rating: dbCall.rating,
+  callTime: new Date(dbCall.call_time),
+});
 
-export const mockCalls: Call[] = Array.from({ length: 150 }, (_, i) => {
-  const callTime = subDays(new Date(), Math.floor(Math.random() * 30)); // Calls within the last 30 days
-  const callType = callTypes[Math.floor(Math.random() * callTypes.length)];
-  const duration = callType === 'Missed' ? 0 : Math.floor(Math.random() * 1800) + 30; // 30s to 30min
-  const appointmentBooked = callType !== 'Missed' && Math.random() > 0.7;
-  const rating = callType !== 'Missed' && appointmentBooked ? Math.floor(Math.random() * 3) + 3 : (callType !== 'Missed' ? Math.floor(Math.random() * 4) + 1 : 0);
+/**
+ * Fetches calls from Supabase within the last N days.
+ * @param periodInDays Number of days to fetch calls from. Defaults to 30.
+ * @returns Promise<Call[]>
+ */
+export const fetchAllCalls = async (periodInDays: number = 30): Promise<Call[]> => {
+  const dateLimit = subDays(new Date(), periodInDays);
 
-  return {
-    id: `call_${i + 1}`,
-    phoneNumber: generateRandomPhoneNumber(),
-    duration,
-    callType,
-    appointmentBooked,
-    rating,
-    callTime,
-  };
-}).sort((a, b) => b.callTime.getTime() - a.callTime.getTime());
+  const { data, error } = await supabase
+    .from('calls') // Assuming your table is named 'calls'
+    .select('id, phone_number, duration, call_type, appointment_booked, rating, call_time')
+    .gte('call_time', dateLimit.toISOString())
+    .order('call_time', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching calls from Supabase:', error);
+    return [];
+  }
+
+  return (data || []).map(mapDbCallToCall);
+};
 
 
-export const getCallsLastWeek = (): Call[] => {
-  const oneWeekAgo = subDays(new Date(), 7);
-  return mockCalls.filter(call => call.callTime >= oneWeekAgo);
+export const getCallsLastWeek = (allCalls: Call[]): Call[] => {
+  const oneWeekAgo = startOfDay(subDays(new Date(), 6)); // Include today and go back 6 more days
+  return allCalls.filter(call => call.callTime >= oneWeekAgo);
 };
 
 export const getTotalCalls = (calls: Call[]): number => calls.length;
@@ -54,6 +74,9 @@ export const getAverageCallDuration = (calls: Call[]): number => {
 };
 
 export const formatDuration = (seconds: number): string => {
+  if (typeof seconds !== 'number' || isNaN(seconds)) {
+    return '00:00';
+  }
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -66,14 +89,15 @@ export const getAverageRating = (calls: Call[]): number => {
   return parseFloat((totalRating / ratedCalls.length).toFixed(1));
 };
 
-export const getCallVolumeLastWeek = (calls: Call[]): { date: string; calls: number }[] => {
+export const getCallVolumeLastWeek = (callsLastWeek: Call[]): { date: string; calls: number }[] => {
   const dailyCounts: { [key: string]: number } = {};
+  // Initialize counts for the last 7 days (including today)
   for (let i = 6; i >= 0; i--) {
     const day = subDays(new Date(), i);
     dailyCounts[format(day, 'MMM d')] = 0;
   }
 
-  calls.forEach(call => {
+  callsLastWeek.forEach(call => {
     const dayKey = format(call.callTime, 'MMM d');
     if (dailyCounts.hasOwnProperty(dayKey)) {
       dailyCounts[dayKey]++;

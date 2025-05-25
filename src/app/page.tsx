@@ -1,9 +1,10 @@
-import { Phone, CalendarDays, Clock, Star as StarIcon, Users } from "lucide-react";
+import { Phone, CalendarDays, Clock, Star as StarIcon } from "lucide-react";
 import { KpiCard } from "@/components/kpi-card";
 import { CallVolumeChart } from "@/components/call-volume-chart";
 import { CallDataTable } from "@/components/call-data-table";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
+  fetchAllCalls,
   getCallsLastWeek,
   getTotalCalls,
   getAppointmentsBooked,
@@ -11,17 +12,21 @@ import {
   formatDuration,
   getAverageRating,
   getCallVolumeLastWeek,
-  mockCalls,
 } from "@/lib/data";
 import type { Call } from "@/lib/data";
 
-export default function DashboardPage() {
-  const callsLastWeek: Call[] = getCallsLastWeek();
-  const totalCalls = getTotalCalls(callsLastWeek);
-  const appointmentsBooked = getAppointmentsBooked(callsLastWeek);
-  const averageCallDuration = getAverageCallDuration(callsLastWeek);
-  const averageRating = getAverageRating(callsLastWeek);
-  const callVolumeData = getCallVolumeLastWeek(callsLastWeek);
+export default async function DashboardPage() {
+  // Fetch all calls for the last 30 days (default) for the table and broader analysis
+  const allFetchedCalls: Call[] = await fetchAllCalls(30);
+
+  // Filter these calls to get data specifically for the last 7 days for KPIs
+  const callsLastWeekForKpis: Call[] = getCallsLastWeek(allFetchedCalls);
+
+  const totalCalls = getTotalCalls(callsLastWeekForKpis);
+  const appointmentsBooked = getAppointmentsBooked(callsLastWeekForKpis);
+  const averageCallDuration = getAverageCallDuration(callsLastWeekForKpis);
+  const averageRating = getAverageRating(callsLastWeekForKpis);
+  const callVolumeData = getCallVolumeLastWeek(callsLastWeekForKpis);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -77,7 +82,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-          <CallDataTable calls={mockCalls} /> {/* Displaying all calls for the table */}
+          {/* Displaying all fetched calls (e.g., last 30 days) for the table */}
+          <CallDataTable calls={allFetchedCalls} /> 
         </div>
       </main>
       <footer className="border-t p-4 text-center text-sm text-muted-foreground">
