@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/supabase'; // Assuming you might create this for typed Supabase
+// import type { Database } from '@/types/supabase'; // Assuming you might create this for typed Supabase
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl) {
-  throw new Error("Missing environment variable NEXT_PUBLIC_SUPABASE_URL");
+  throw new Error("Missing environment variable NEXT_PUBLIC_SUPABASE_URL. Please ensure it is set in your .env.local file and that you have restarted your Next.js development server.");
 }
 if (!supabaseAnonKey) {
-  throw new Error("Missing environment variable NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  throw new Error("Missing environment variable NEXT_PUBLIC_SUPABASE_ANON_KEY. Please ensure it is set in your .env.local file and that you have restarted your Next.js development server.");
 }
 
 // If you have generated types for your database, you can pass them here:
