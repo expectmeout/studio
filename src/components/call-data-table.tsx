@@ -318,7 +318,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
               placeholder="Filter calls..."
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full sm:max-w-sm border-primary dark:border-input hidden sm:block" // Hide on mobile
+              className="w-full sm:max-w-sm border-input dark:border-input hidden sm:block" // Hide on mobile
             />
             <div className="flex gap-2 w-full sm:w-auto">
               <DropdownMenu>
