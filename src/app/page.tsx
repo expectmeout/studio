@@ -126,7 +126,11 @@ export default function DashboardPage() {
 
   if (!session) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
+      <div className="flex min-h-screen w-full flex-col items-center bg-background p-4" style={{
+        justifyContent: 'space-between',
+        paddingTop: '2rem',
+        paddingBottom: '1.875rem'
+      }}>
         <div className="absolute top-4 right-4">
           <ThemeToggle />
         </div>
@@ -197,13 +201,13 @@ export default function DashboardPage() {
               </Button>
             </form>
           </CardContent>
-           <CardFooter className="text-center block">
+           <CardFooter className="text-center block pb-2">
              <p className="text-xs text-muted-foreground">
                 Don&apos;t have an account? <a href="https://chanlytics.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Get started with Chanlytics.</a>
              </p>
           </CardFooter>
         </Card>
-        <footer className="border-t p-4 text-center text-sm text-muted-foreground mt-auto w-full">
+        <footer className="border-t p-3 text-center text-sm text-muted-foreground w-full">
             © {new Date().getFullYear()} CHANLYTICS. All rights reserved.
         </footer>
       </div>
