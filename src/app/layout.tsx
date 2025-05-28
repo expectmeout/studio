@@ -12,7 +12,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: 'Call Insight',
+  title: 'CHANLYTICS',
   description: 'Modern dashboard for tracking calls and KPIs.',
 };
 
@@ -39,3 +39,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    

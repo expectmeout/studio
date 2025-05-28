@@ -123,18 +123,24 @@ export default function DashboardPage() {
          <Card className="w-full max-w-sm shadow-xl">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-primary">
-                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" />
-                    <path d="M16.5 16.5A6.5 6.5 0 005.5 5.5" />
-                    <path d="M12 4v1.5" />
-                    <path d="M12 18.5V20" />
-                    <path d="M4 12h1.5" />
-                    <path d="M18.5 12H20" />
-                    <path d="m17 7-1-1" />
-                    <path d="m8 16 1 1" />
+                <svg viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-auto text-foreground">
+                  <g transform="translate(15 9)" fill="url(#chanlytics_logo_gradient_login)">
+                    <rect x="4" y="8" width="8" height="8" rx="2"/>
+                    <rect x="12" y="12" width="8" height="8" rx="2" opacity=".8"/>
+                    <rect x="20" y="16" width="8" height="8" rx="2" opacity=".6"/>
+                  </g>
+                  <text x="50" y="50%" dominantBaseline="middle" fontFamily="'Playwright Display', sans-serif" fontSize="28" fontWeight="400" letterSpacing="1" fill="currentColor">
+                    CHANLYTICS
+                  </text>
+                  <defs>
+                    <linearGradient id="chanlytics_logo_gradient_login" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+                      <stop stopColor="#4A6CF7"/>
+                      <stop offset="1" stopColor="#2BC8B7"/>
+                    </linearGradient>
+                  </defs>
                 </svg>
             </div>
-            <CardTitle className="text-2xl">Welcome to Call Insight</CardTitle>
+            <CardTitle className="text-2xl">Welcome to CHANLYTICS</CardTitle>
             <CardDescription>Please sign in to access your dashboard.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -188,7 +194,7 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
         <footer className="border-t p-4 text-center text-sm text-muted-foreground mt-auto w-full">
-            © {new Date().getFullYear()} Call Insight. All rights reserved.
+            © {new Date().getFullYear()} CHANLYTICS. All rights reserved.
         </footer>
       </div>
     );
@@ -198,20 +204,25 @@ export default function DashboardPage() {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
         <div className="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary">
-            <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" />
-            <path d="M16.5 16.5A6.5 6.5 0 005.5 5.5" />
-            <path d="M12 4v1.5" />
-            <path d="M12 18.5V20" />
-            <path d="M4 12h1.5" />
-            <path d="M18.5 12H20" />
-            <path d="m17 7-1-1" />
-            <path d="m8 16 1 1" />
+          <svg viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-auto text-foreground">
+            <g transform="translate(15 9)" fill="url(#chanlytics_logo_gradient_header)">
+              <rect x="4" y="8" width="8" height="8" rx="2"/>
+              <rect x="12" y="12" width="8" height="8" rx="2" opacity=".8"/>
+              <rect x="20" y="16" width="8" height="8" rx="2" opacity=".6"/>
+            </g>
+            <text x="50" y="50%" dominantBaseline="middle" fontFamily="'Playwright Display', sans-serif" fontSize="28" fontWeight="400" letterSpacing="1" fill="currentColor">
+              CHANLYTICS
+            </text>
+            <defs>
+              <linearGradient id="chanlytics_logo_gradient_header" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+                <stop stopColor="#4A6CF7"/>
+                <stop offset="1" stopColor="#2BC8B7"/>
+              </linearGradient>
+            </defs>
           </svg>
-          <h1 className="text-xl font-semibold text-foreground">Call Insight</h1>
         </div>
         <div className="ml-auto flex items-center gap-4">
-          {user && session && ( // Check for both user and session
+          {user && session && ( 
             <UserAccountNav
               onSettingsClick={handleSettings}
               onBillingClick={handleBilling}
@@ -265,9 +276,10 @@ export default function DashboardPage() {
         </div>
       </main>
       <footer className="border-t p-4 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Call Insight. All rights reserved.
+        © {new Date().getFullYear()} CHANLYTICS. All rights reserved.
       </footer>
     </div>
   );
 }
 
+    

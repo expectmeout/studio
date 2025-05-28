@@ -179,8 +179,10 @@ export default function BillingPage() {
         </Card>
       </main>
        <footer className="border-t p-4 text-center text-sm text-muted-foreground mt-auto">
-        © {new Date().getFullYear()} Call Insight. All rights reserved.
+        © {new Date().getFullYear()} CHANLYTICS. All rights reserved.
       </footer>
     </div>
   );
 }
+
+    
