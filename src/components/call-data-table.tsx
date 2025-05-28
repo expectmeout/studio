@@ -45,6 +45,8 @@ import {
   ChevronDown,
   ListFilter,
   FileText,
+  Columns,
+  Download
 } from "lucide-react";
 import type { Call } from "@/lib/data";
 import { formatDuration } from "@/lib/data";
@@ -144,6 +146,32 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
   const [selectedCall, setSelectedCall] = React.useState<Call | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
 
+  const handleDownload = async (call: Call) => {
+    if (!call.recordingUrl) {
+      console.error('No recording URL available');
+      return;
+    }
+    
+    try {
+      const response = await fetch(call.recordingUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${call.phoneNumber.replace(/\D/g, '')}_${format(call.callTime, 'yyyy-MM-dd')}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      // You might want to show a toast/notification to the user here
+    }
+  };
+
   const handleViewDetails = (call: Call) => {
     setSelectedCall(call);
     setIsDetailModalOpen(true);
@@ -218,12 +246,26 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />;
   };
 
-  // Add toggle column visibility function
+  // Add toggle column visibility function with mobile optimization
   const toggleColumnVisibility = (columnKey: string) => {
-    setColumnVisibility(prev => ({
-      ...prev,
-      [columnKey]: !prev[columnKey]
-    }));
+    setColumnVisibility(prev => {
+      // Count currently visible columns
+      const visibleCount = Object.values(prev).filter(v => v).length;
+      const column = columns.find(c => String(c.key) === columnKey);
+      
+      // If we're on mobile and trying to hide a high priority column when we're at the minimum
+      if (window.innerWidth < 768 && 
+          column?.priority === 'high' && 
+          visibleCount <= 3 && 
+          prev[columnKey]) {
+        return prev; // Don't allow hiding high priority columns on mobile when at minimum
+      }
+      
+      return {
+        ...prev,
+        [columnKey]: !prev[columnKey]
+      };
+    });
   };
   
   // Define column properties with a new 'priority' field
@@ -250,7 +292,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     { key: "callTime", label: "Call Time", render: (call) => format(call.callTime, "MMM d, yyyy HH:mm"), headerClassName: "w-[200px]", priority: 'medium' },
     { 
       key: "actions", 
-      label: "Actions", 
+      label: "Recording", 
       priority: 'high',
       render: (call: Call) => (
         <Button variant="outline" size="sm" onClick={() => handleViewDetails(call)}>
@@ -275,6 +317,29 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
               className="max-w-sm border-primary dark:border-input"
             />
             <div className="flex gap-2 ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <Columns className="mr-2 h-4 w-4" /> Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {columns.map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={String(column.key)}
+                      className="capitalize"
+                      checked={columnVisibility[String(column.key)]}
+                      onCheckedChange={() => toggleColumnVisibility(String(column.key))}
+                      disabled={column.priority === 'high' && 
+                        Object.values(columnVisibility).filter(v => v).length <= 3}
+                    >
+                      {String(column.key).replace(/([A-Z])/g, ' $1').trim()}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -359,7 +424,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
 
       {selectedCall && (
         <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col dark:bg-card">
+          <DialogContent className="w-[95vw] max-w-[600px] max-h-[80vh] flex flex-col dark:bg-card sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Call Details: {selectedCall.phoneNumber}</DialogTitle>
               <DialogDescription>
@@ -390,7 +455,15 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
                 <p className="mt-4 text-muted-foreground">No recording available for this call.</p>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2">
+              {selectedCall?.recordingUrl && (
+                <button
+                  onClick={() => handleDownload(selectedCall)}
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-[#fafafa] hover:bg-primary/90 h-10 px-4 py-2 dark:text-[#fafafa]"
+                >
+                  <Download className="mr-2 h-4 w-4" /> Download
+                </button>
+              )}
               <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
                 Close
               </Button>
