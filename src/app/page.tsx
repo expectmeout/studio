@@ -123,7 +123,7 @@ export default function DashboardPage() {
          <Card className="w-full max-w-sm shadow-xl">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-                <svg viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-auto text-foreground">
+                <svg viewBox="0 0 240 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-auto text-foreground">
                   <g transform="translate(15 9)" fill="url(#chanlytics_logo_gradient_login)">
                     <rect x="4" y="8" width="8" height="8" rx="2"/>
                     <rect x="12" y="12" width="8" height="8" rx="2" opacity=".8"/>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
         <div className="flex items-center gap-2">
-          <svg viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-auto text-foreground">
+          <svg viewBox="0 0 240 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-auto text-foreground">
             <g transform="translate(15 9)" fill="url(#chanlytics_logo_gradient_header)">
               <rect x="4" y="8" width="8" height="8" rx="2"/>
               <rect x="12" y="12" width="8" height="8" rx="2" opacity=".8"/>
@@ -281,5 +281,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
