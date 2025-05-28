@@ -1,8 +1,14 @@
-import { Phone, CalendarDays, Clock, Star as StarIcon } from "lucide-react";
+
+"use client"; // Required for useState and event handlers
+
+import * as React from "react"; // Import React
+import { Phone, CalendarDays, Clock, Star as StarIcon, UserCircle, Settings, CreditCard, LogOut } from "lucide-react";
 import { KpiCard } from "@/components/kpi-card";
 import { CallVolumeChart } from "@/components/call-volume-chart";
 import { CallDataTable } from "@/components/call-data-table";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserAccountNav } from "@/components/user-account-nav"; // Import UserAccountNav
+import { Button } from "@/components/ui/button"; // Import Button for Login
 import {
   fetchAllCalls,
   getCallsLastWeek,
@@ -15,24 +21,75 @@ import {
 } from "@/lib/data";
 import type { Call } from "@/lib/data";
 
-export default async function DashboardPage() {
-  // Fetch all calls for the last 30 days (default) for the table and broader analysis
-  const allFetchedCalls: Call[] = await fetchAllCalls(30);
+// Define a type for our mock user
+interface MockUser {
+  name: string;
+  email: string;
+  image?: string; // Optional image URL for avatar
+}
 
-  // Filter these calls to get data specifically for the last 7 days for KPIs
-  const callsLastWeekForKpis: Call[] = getCallsLastWeek(allFetchedCalls);
+export default function DashboardPage() {
+  // State for fetched calls and chart data
+  const [allCalls, setAllCalls] = React.useState<Call[]>([]);
+  const [callsLastWeekForKpis, setCallsLastWeekForKpis] = React.useState<Call[]>([]);
+  const [totalCalls, setTotalCalls] = React.useState(0);
+  const [appointmentsBooked, setAppointmentsBooked] = React.useState(0);
+  const [averageCallDuration, setAverageCallDuration] = React.useState(0);
+  const [averageRating, setAverageRating] = React.useState(0);
+  const [callVolumeData, setCallVolumeData] = React.useState<{ date: string; calls: number }[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const totalCalls = getTotalCalls(callsLastWeekForKpis);
-  const appointmentsBooked = getAppointmentsBooked(callsLastWeekForKpis);
-  const averageCallDuration = getAverageCallDuration(callsLastWeekForKpis);
-  const averageRating = getAverageRating(callsLastWeekForKpis);
-  const callVolumeData = getCallVolumeLastWeek(callsLastWeekForKpis);
+
+  // Mock user state
+  const [currentUser, setCurrentUser] = React.useState<MockUser | null>(null);
+
+  React.useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      const fetchedCalls = await fetchAllCalls(30);
+      setAllCalls(fetchedCalls);
+
+      const lastWeekKpiCalls = getCallsLastWeek(fetchedCalls);
+      setCallsLastWeekForKpis(lastWeekKpiCalls);
+
+      setTotalCalls(getTotalCalls(lastWeekKpiCalls));
+      setAppointmentsBooked(getAppointmentsBooked(lastWeekKpiCalls));
+      setAverageCallDuration(getAverageCallDuration(lastWeekKpiCalls));
+      setAverageRating(getAverageRating(lastWeekKpiCalls));
+      setCallVolumeData(getCallVolumeLastWeek(lastWeekKpiCalls));
+      setIsLoading(false);
+    }
+    loadData();
+  }, []);
+
+  const handleLogin = () => {
+    setCurrentUser({ name: "Demo User", email: "demo@example.com" });
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    console.log("User logged out");
+  };
+
+  const handleSettings = () => {
+    console.log("Settings clicked");
+    // Placeholder for navigation or modal
+  };
+
+  const handleBilling = () => {
+    console.log("Billing clicked");
+    // Placeholder for navigation or modal
+  };
+
+  // Display loading state for KPIs
+  const kpiValue = (value: string | number) => isLoading ? "..." : value;
+  const kpiFormattedDuration = (duration: number) => isLoading ? "..." : formatDuration(duration);
+
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
         <div className="flex items-center gap-2">
-           {/* Placeholder for a logo or app icon if available */}
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary">
             <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" />
             <path d="M16.5 16.5A6.5 6.5 0 005.5 5.5" />
@@ -45,7 +102,19 @@ export default async function DashboardPage() {
           </svg>
           <h1 className="text-xl font-semibold text-foreground">Call Insight</h1>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-4">
+          {currentUser ? (
+            <UserAccountNav
+              user={currentUser}
+              onSettingsClick={handleSettings}
+              onBillingClick={handleBilling}
+              onLogoutClick={handleLogout}
+            />
+          ) : (
+            <Button variant="outline" onClick={handleLogin}>
+              Log In
+            </Button>
+          )}
           <ThemeToggle />
         </div>
       </header>
@@ -53,37 +122,44 @@ export default async function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             title="Total Calls"
-            value={totalCalls}
+            value={kpiValue(totalCalls)}
             icon={Phone}
             description="Last 7 days"
           />
           <KpiCard
             title="Appointments Booked"
-            value={appointmentsBooked}
+            value={kpiValue(appointmentsBooked)}
             icon={CalendarDays}
             description="Last 7 days"
           />
           <KpiCard
             title="Avg. Call Duration"
-            value={formatDuration(averageCallDuration)}
+            value={kpiFormattedDuration(averageCallDuration)}
             icon={Clock}
             description="Last 7 days"
           />
           <KpiCard
             title="Avg. Rating"
-            value={`${averageRating} / 5`}
+            value={isLoading ? "..." : `${averageRating} / 5`}
             icon={StarIcon}
             description="Last 7 days"
           />
         </div>
 
         <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-          <CallVolumeChart data={callVolumeData} />
+          {isLoading ? (
+             <div className="rounded-lg border bg-card text-card-foreground shadow-sm h-[350px] flex items-center justify-center"><p>Loading chart data...</p></div>
+          ) : (
+            <CallVolumeChart data={callVolumeData} />
+          )}
         </div>
 
         <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-          {/* Displaying all fetched calls (e.g., last 30 days) for the table */}
-          <CallDataTable calls={allFetchedCalls} /> 
+          {isLoading ? (
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm h-[400px] flex items-center justify-center"><p>Loading call data...</p></div>
+          ) : (
+            <CallDataTable calls={allCalls} />
+          )}
         </div>
       </main>
       <footer className="border-t p-4 text-center text-sm text-muted-foreground">
@@ -92,3 +168,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
