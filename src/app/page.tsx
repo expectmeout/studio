@@ -1,15 +1,18 @@
 
-"use client"; // Required for useState and event handlers
+"use client";
 
-import * as React from "react"; // Import React
-import { useRouter } from 'next/navigation'; // Import useRouter
-import { Phone, CalendarDays, Clock, Star as StarIcon } from "lucide-react";
+import * as React from "react";
+import { useRouter } from 'next/navigation';
+import { Phone, CalendarDays, Clock, Star as StarIcon, LogIn } from "lucide-react";
 import { KpiCard } from "@/components/kpi-card";
 import { CallVolumeChart } from "@/components/call-volume-chart";
 import { CallDataTable } from "@/components/call-data-table";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAccountNav } from "@/components/user-account-nav";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import {
   fetchAllCalls,
   getCallsLastWeek,
@@ -21,16 +24,13 @@ import {
   getCallVolumeLastWeek,
 } from "@/lib/data";
 import type { Call } from "@/lib/data";
-
-// Define a type for our mock user
-interface MockUser {
-  name: string;
-  email: string;
-  image?: string; // Optional image URL for avatar
-}
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
+  const { user, session, isLoading: authIsLoading, signInWithPassword } = useAuth();
+
   const [allCalls, setAllCalls] = React.useState<Call[]>([]);
   const [callsLastWeekForKpis, setCallsLastWeekForKpis] = React.useState<Call[]>([]);
   const [totalCalls, setTotalCalls] = React.useState(0);
@@ -38,50 +38,164 @@ export default function DashboardPage() {
   const [averageCallDuration, setAverageCallDuration] = React.useState(0);
   const [averageRating, setAverageRating] = React.useState(0);
   const [callVolumeData, setCallVolumeData] = React.useState<{ date: string; calls: number }[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoadingData, setIsLoadingData] = React.useState(true);
 
-  const [currentUser, setCurrentUser] = React.useState<MockUser | null>(null);
+  // Login form state
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [loginError, setLoginError] = React.useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
 
   React.useEffect(() => {
     async function loadData() {
-      setIsLoading(true);
-      const fetchedCalls = await fetchAllCalls(30);
-      setAllCalls(fetchedCalls);
+      if (session) { // Only load data if user is logged in
+        setIsLoadingData(true);
+        const fetchedCalls = await fetchAllCalls(30);
+        setAllCalls(fetchedCalls);
 
-      const lastWeekKpiCalls = getCallsLastWeek(fetchedCalls);
-      setCallsLastWeekForKpis(lastWeekKpiCalls);
+        const lastWeekKpiCalls = getCallsLastWeek(fetchedCalls);
+        setCallsLastWeekForKpis(lastWeekKpiCalls);
 
-      setTotalCalls(getTotalCalls(lastWeekKpiCalls));
-      setAppointmentsBooked(getAppointmentsBooked(lastWeekKpiCalls));
-      setAverageCallDuration(getAverageCallDuration(lastWeekKpiCalls));
-      setAverageRating(getAverageRating(lastWeekKpiCalls));
-      setCallVolumeData(getCallVolumeLastWeek(lastWeekKpiCalls));
-      setIsLoading(false);
+        setTotalCalls(getTotalCalls(lastWeekKpiCalls));
+        setAppointmentsBooked(getAppointmentsBooked(lastWeekKpiCalls));
+        setAverageCallDuration(getAverageCallDuration(lastWeekKpiCalls));
+        setAverageRating(getAverageRating(lastWeekKpiCalls));
+        setCallVolumeData(getCallVolumeLastWeek(lastWeekKpiCalls));
+        setIsLoadingData(false);
+      } else {
+        // Clear data if no session
+        setAllCalls([]);
+        setCallsLastWeekForKpis([]);
+        setTotalCalls(0);
+        setAppointmentsBooked(0);
+        setAverageCallDuration(0);
+        setAverageRating(0);
+        setCallVolumeData([]);
+        setIsLoadingData(false);
+      }
     }
-    loadData();
-  }, []);
+    if (!authIsLoading) { // Wait for auth state to resolve
+        loadData();
+    }
+  }, [session, authIsLoading]);
 
-  const handleLogin = () => {
-    setCurrentUser({ name: "Demo User", email: "demo@example.com" });
-  };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    console.log("User logged out");
+  const handleLoginSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoginError(null);
+    setIsLoggingIn(true);
+    const { error } = await signInWithPassword(email, password);
+    if (error) {
+      setLoginError(error.message);
+    } else {
+      // Login successful, onAuthStateChange will handle session update
+      // and redirect or UI update will happen via useEffect dependency on session
+      setEmail("");
+      setPassword("");
+    }
+    setIsLoggingIn(false);
   };
 
   const handleSettings = () => {
-    console.log("Settings clicked - navigating to /settings");
-    router.push('/settings'); // Navigate to settings page
+    router.push('/settings');
   };
 
   const handleBilling = () => {
-    console.log("Billing clicked - navigating to /billing");
-    router.push('/billing'); // Navigate to billing page
+    router.push('/billing');
   };
 
-  const kpiValue = (value: string | number) => isLoading ? "..." : value;
-  const kpiFormattedDuration = (duration: number) => isLoading ? "..." : formatDuration(duration);
+  const kpiValue = (value: string | number) => (isLoadingData || authIsLoading) ? <Skeleton className="h-6 w-1/2" /> : value;
+  const kpiFormattedDuration = (duration: number) => (isLoadingData || authIsLoading) ? <Skeleton className="h-6 w-1/2" /> : formatDuration(duration);
+
+
+  if (authIsLoading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 animate-spin text-primary mb-4">
+          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" />
+          <path d="M16.5 16.5A6.5 6.5 0 005.5 5.5" />
+        </svg>
+        <p className="text-lg text-muted-foreground">Loading application...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
+         <Card className="w-full max-w-sm shadow-xl">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-primary">
+                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" />
+                    <path d="M16.5 16.5A6.5 6.5 0 005.5 5.5" />
+                    <path d="M12 4v1.5" />
+                    <path d="M12 18.5V20" />
+                    <path d="M4 12h1.5" />
+                    <path d="M18.5 12H20" />
+                    <path d="m17 7-1-1" />
+                    <path d="m8 16 1 1" />
+                </svg>
+            </div>
+            <CardTitle className="text-2xl">Welcome to Call Insight</CardTitle>
+            <CardDescription>Please sign in to access your dashboard.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoggingIn}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoggingIn}
+                />
+              </div>
+              {loginError && (
+                <p className="text-sm text-destructive">{loginError}</p>
+              )}
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                {isLoggingIn ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing In...
+                  </>
+                ) : (
+                  <> <LogIn className="mr-2 h-4 w-4" /> Sign In </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+           <CardFooter className="text-center block">
+             <p className="text-xs text-muted-foreground">
+                Don't have an account? <a href="https://supabase.com/dashboard/project/_/auth/users" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Sign up via Supabase.</a>
+             </p>
+          </CardFooter>
+        </Card>
+        <footer className="border-t p-4 text-center text-sm text-muted-foreground mt-auto w-full">
+            © {new Date().getFullYear()} Call Insight. All rights reserved.
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -100,17 +214,16 @@ export default function DashboardPage() {
           <h1 className="text-xl font-semibold text-foreground">Call Insight</h1>
         </div>
         <div className="ml-auto flex items-center gap-4">
-          {currentUser ? (
+          {user && (
             <UserAccountNav
-              user={currentUser}
+              user={{ // Adapt Supabase user to the expected structure
+                name: user.user_metadata?.full_name || user.email,
+                email: user.email,
+                image: user.user_metadata?.avatar_url,
+              }}
               onSettingsClick={handleSettings}
               onBillingClick={handleBilling}
-              onLogoutClick={handleLogout}
             />
-          ) : (
-            <Button variant="outline" onClick={handleLogin}>
-              Log In
-            </Button>
           )}
           <ThemeToggle />
         </div>
@@ -137,23 +250,23 @@ export default function DashboardPage() {
           />
           <KpiCard
             title="Avg. Rating"
-            value={isLoading ? "..." : `${averageRating} / 5`}
+            value={(isLoadingData || authIsLoading) ? <Skeleton className="h-6 w-1/2" /> : `${averageRating} / 5`}
             icon={StarIcon}
             description="Last 7 days"
           />
         </div>
 
         <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-          {isLoading ? (
-             <div className="rounded-lg border bg-card text-card-foreground shadow-sm h-[350px] flex items-center justify-center"><p>Loading chart data...</p></div>
+          {(isLoadingData || authIsLoading) ? (
+             <Skeleton className="rounded-lg border bg-card text-card-foreground shadow-sm h-[350px] flex items-center justify-center"><p>Loading chart data...</p></Skeleton>
           ) : (
             <CallVolumeChart data={callVolumeData} />
           )}
         </div>
 
         <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-          {isLoading ? (
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm h-[400px] flex items-center justify-center"><p>Loading call data...</p></div>
+          {(isLoadingData || authIsLoading) ? (
+            <Skeleton className="rounded-lg border bg-card text-card-foreground shadow-sm h-[400px] flex items-center justify-center"><p>Loading call data...</p></Skeleton>
           ) : (
             <CallDataTable calls={allCalls} />
           )}

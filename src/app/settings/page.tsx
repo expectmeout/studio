@@ -8,34 +8,80 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// Mock user for the settings page - in a real app, this would come from auth/context
-interface MockUser {
-  name: string;
-  email: string;
-  image?: string;
-}
-
-const mockSettingsUser: MockUser = {
-  name: "Demo User",
-  email: "demo@example.com",
-  // image: "https://placehold.co/100x100.png" // Optional placeholder
-};
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const router = useRouter();
-  // In a real app, user data would come from an authentication context or global state
-  const [user] = React.useState<MockUser>(mockSettingsUser); 
+  const { user, isLoading: authIsLoading, session } = useAuth(); // Get user from context
 
-  const getInitials = (name?: string | null) => {
-    if (!name) return "";
-    const names = name.split(" ");
-    let initials = names[0].substring(0, 1).toUpperCase();
-    if (names.length > 1) {
-      initials += names[names.length - 1].substring(0, 1).toUpperCase();
+  React.useEffect(() => {
+    if (!authIsLoading && !session) {
+      router.replace('/'); // Redirect to login if not authenticated
     }
-    return initials;
+  }, [authIsLoading, session, router]);
+
+  const getInitials = (name?: string | null, email?: string | null): string => {
+    if (name) {
+        const names = name.split(" ");
+        let initials = names[0].substring(0, 1).toUpperCase();
+        if (names.length > 1 && names[names.length-1]) {
+          initials += names[names.length - 1].substring(0, 1).toUpperCase();
+        }
+        return initials;
+    }
+    if (email) {
+        return email.substring(0,1).toUpperCase();
+    }
+    return "U";
   };
+
+  if (authIsLoading || !session) {
+    return (
+      <div className="flex min-h-screen w-full flex-col bg-background">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
+          <Button variant="outline" size="icon" onClick={() => router.push('/')} aria-label="Back to Dashboard" disabled>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-xl font-semibold text-foreground">Settings</h1>
+        </header>
+        <main className="flex flex-1 flex-col items-center justify-start gap-6 p-4 sm:px-6 md:gap-8 md:p-10">
+          <Card className="w-full max-w-2xl shadow-lg">
+            <CardHeader>
+              <Skeleton className="h-7 w-3/5" />
+              <Skeleton className="h-4 w-4/5 mt-1" />
+            </CardHeader>
+            <CardContent className="space-y-8 pt-6">
+              <div className="flex items-center space-x-4">
+                <Skeleton className="h-20 w-20 rounded-full" />
+                <div>
+                  <Skeleton className="h-6 w-32 mb-1" />
+                  <Skeleton className="h-4 w-40" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-24 mb-1" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-24 mb-1" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-24 mb-1" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  const displayName = user?.user_metadata?.full_name || user?.email || "User";
+  const displayEmail = user?.email || "No email provided";
+  const avatarUrl = user?.user_metadata?.avatar_url;
+
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -54,26 +100,26 @@ export default function SettingsPage() {
           <CardContent className="space-y-8 pt-6">
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20 text-lg">
-                {user.image ? (
-                  <AvatarImage src={user.image} alt={user.name} data-ai-hint="user avatar" />
+                {avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="user avatar" />
                 ) : (
-                   <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                   <AvatarFallback>{getInitials(displayName, displayEmail)}</AvatarFallback>
                 )}
               </Avatar>
               <div>
-                <p className="text-xl font-semibold text-foreground">{user.name}</p>
-                <p className="text-md text-muted-foreground">{user.email}</p>
+                <p className="text-xl font-semibold text-foreground">{displayName}</p>
+                <p className="text-md text-muted-foreground">{displayEmail}</p>
               </div>
             </div>
 
             <div className="space-y-3">
                 <h3 className="text-md font-medium text-foreground">Full Name</h3>
-                <p className="text-sm text-foreground p-3 border rounded-md bg-muted/20">{user.name}</p>
+                <p className="text-sm text-foreground p-3 border rounded-md bg-muted/20">{displayName}</p>
             </div>
 
             <div className="space-y-3">
                 <h3 className="text-md font-medium text-foreground">Email Address</h3>
-                <p className="text-sm text-foreground p-3 border rounded-md bg-muted/20">{user.email}</p>
+                <p className="text-sm text-foreground p-3 border rounded-md bg-muted/20">{displayEmail}</p>
             </div>
             
             <div className="space-y-3">
