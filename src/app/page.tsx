@@ -2,13 +2,14 @@
 "use client"; // Required for useState and event handlers
 
 import * as React from "react"; // Import React
-import { Phone, CalendarDays, Clock, Star as StarIcon, UserCircle, Settings, CreditCard, LogOut } from "lucide-react";
+import { useRouter } from 'next/navigation'; // Import useRouter
+import { Phone, CalendarDays, Clock, Star as StarIcon } from "lucide-react";
 import { KpiCard } from "@/components/kpi-card";
 import { CallVolumeChart } from "@/components/call-volume-chart";
 import { CallDataTable } from "@/components/call-data-table";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { UserAccountNav } from "@/components/user-account-nav"; // Import UserAccountNav
-import { Button } from "@/components/ui/button"; // Import Button for Login
+import { UserAccountNav } from "@/components/user-account-nav";
+import { Button } from "@/components/ui/button";
 import {
   fetchAllCalls,
   getCallsLastWeek,
@@ -29,7 +30,7 @@ interface MockUser {
 }
 
 export default function DashboardPage() {
-  // State for fetched calls and chart data
+  const router = useRouter(); // Initialize router
   const [allCalls, setAllCalls] = React.useState<Call[]>([]);
   const [callsLastWeekForKpis, setCallsLastWeekForKpis] = React.useState<Call[]>([]);
   const [totalCalls, setTotalCalls] = React.useState(0);
@@ -39,8 +40,6 @@ export default function DashboardPage() {
   const [callVolumeData, setCallVolumeData] = React.useState<{ date: string; calls: number }[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-
-  // Mock user state
   const [currentUser, setCurrentUser] = React.useState<MockUser | null>(null);
 
   React.useEffect(() => {
@@ -72,8 +71,8 @@ export default function DashboardPage() {
   };
 
   const handleSettings = () => {
-    console.log("Settings clicked");
-    // Placeholder for navigation or modal
+    console.log("Settings clicked - navigating to /settings");
+    router.push('/settings'); // Navigate to settings page
   };
 
   const handleBilling = () => {
@@ -81,10 +80,8 @@ export default function DashboardPage() {
     // Placeholder for navigation or modal
   };
 
-  // Display loading state for KPIs
   const kpiValue = (value: string | number) => isLoading ? "..." : value;
   const kpiFormattedDuration = (duration: number) => isLoading ? "..." : formatDuration(duration);
-
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -168,4 +165,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
