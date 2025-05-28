@@ -14,6 +14,9 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: 'CHANLYTICS',
   description: 'Modern dashboard for tracking calls and KPIs.',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

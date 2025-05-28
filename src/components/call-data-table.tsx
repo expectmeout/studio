@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -92,6 +91,55 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
   const [columnFilters, setColumnFilters] = React.useState<{
     appointmentBooked: ('Yes' | 'No')[];
   }>({ appointmentBooked: []});
+  
+  // Responsive column visibility state
+  const [columnVisibility, setColumnVisibility] = React.useState<{
+    [key: string]: boolean;
+  }>({
+    phoneNumber: true,
+    duration: true,
+    callType: true, 
+    appointmentBooked: true,
+    rating: true,
+    callTime: true,
+    actions: true
+  });
+  
+  // Set initial visibility based on screen size
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) { // Mobile breakpoint
+        setColumnVisibility(prev => ({
+          ...prev,
+          phoneNumber: true,     // Always show on mobile
+          duration: false,       // Hide on mobile
+          callType: false,       // Hide on mobile
+          appointmentBooked: true, // Always show on mobile
+          rating: false,         // Hide on mobile
+          callTime: false,       // Hide on mobile
+          actions: true          // Always show on mobile
+        }));
+      } else {
+        // On desktop, show all columns
+        setColumnVisibility({
+          phoneNumber: true,
+          duration: true,
+          callType: true,
+          appointmentBooked: true,
+          rating: true,
+          callTime: true,
+          actions: true
+        });
+      }
+    };
+    
+    // Initialize column visibility based on current screen size
+    handleResize();
+    
+    // Listen for window resize events
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [selectedCall, setSelectedCall] = React.useState<Call | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
@@ -151,9 +199,9 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     setCalls(filteredCalls);
   }, [searchTerm, sortKey, sortDirection, initialCalls, columnFilters]);
 
-  const toggleColumnFilter = (filterType: 'appointmentBooked', value: string) => {
+  const toggleColumnFilter = (filterType: 'appointmentBooked', value: 'Yes' | 'No') => {
     setColumnFilters(prev => {
-      const currentFilter = prev[filterType] as string[];
+      const currentFilter = prev[filterType];
       const newFilter = currentFilter.includes(value)
         ? currentFilter.filter(item => item !== value)
         : [...currentFilter, value];
@@ -170,23 +218,40 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />;
   };
 
-  const columns: { key: SortKey; label: string; headerClassName?: string, cellClassName?: string, render?: (call:Call) => React.ReactNode }[] = [
-    { key: "phoneNumber", label: "Phone Number", headerClassName: "w-[180px]" },
-    { key: "duration", label: "Duration", render: (call) => formatDuration(call.duration) },
+  // Add toggle column visibility function
+  const toggleColumnVisibility = (columnKey: string) => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [columnKey]: !prev[columnKey]
+    }));
+  };
+  
+  // Define column properties with a new 'priority' field
+  const columns: { 
+    key: SortKey; 
+    label: string; 
+    headerClassName?: string; 
+    cellClassName?: string; 
+    render?: (call:Call) => React.ReactNode;
+    priority?: 'high' | 'medium' | 'low'; // High priority columns show on all devices
+  }[] = [
+    { key: "phoneNumber", label: "Phone Number", headerClassName: "w-[180px]", priority: 'high' },
+    { key: "duration", label: "Duration", render: (call) => formatDuration(call.duration), priority: 'low' },
     { key: "callType", label: "Call Type", render: (call) => (
       <div className="flex items-center gap-2">
         <CallTypeIcon type={call.callType} />
         {call.callType}
       </div>
-    )},
+    ), priority: 'medium' },
     { key: "appointmentBooked", label: "Appointment", render: (call) => (
       call.appointmentBooked ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />
-    )},
-    { key: "rating", label: "Rating", render: (call) => call.rating > 0 ? <RatingStars rating={call.rating} /> : <span className="text-muted-foreground">N/A</span>},
-    { key: "callTime", label: "Call Time", render: (call) => format(call.callTime, "MMM d, yyyy HH:mm"), headerClassName: "w-[200px]" },
+    ), priority: 'high' },
+    { key: "rating", label: "Rating", render: (call) => call.rating > 0 ? <RatingStars rating={call.rating} /> : <span className="text-muted-foreground">N/A</span>, priority: 'low' },
+    { key: "callTime", label: "Call Time", render: (call) => format(call.callTime, "MMM d, yyyy HH:mm"), headerClassName: "w-[200px]", priority: 'medium' },
     { 
       key: "actions", 
       label: "Actions", 
+      priority: 'high',
       render: (call: Call) => (
         <Button variant="outline" size="sm" onClick={() => handleViewDetails(call)}>
           <FileText className="mr-2 h-4 w-4" /> View
@@ -201,77 +266,94 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
         <CardTitle>Call Log</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center py-4 gap-2">
-          <Input
-            placeholder="Filter calls..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            className="max-w-sm border-primary dark:border-input"
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                <ListFilter className="mr-2 h-4 w-4" /> Filters <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by Appointment Booked</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {uniqueAppointmentStatus.map((status) => (
-                <DropdownMenuCheckboxItem
-                  key={status}
-                  checked={columnFilters.appointmentBooked.includes(status)}
-                  onCheckedChange={() => toggleColumnFilter('appointmentBooked', status)}
-                >
-                  {status}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {columns.map(col => (
-                  <TableHead key={String(col.key)} className={col.headerClassName}>
-                     {col.key === 'actions' ? (
-                        <span className="px-0">{col.label}</span>
-                      ) : (
-                        <Button variant="ghost" onClick={() => handleSort(col.key)} className="group px-0 hover:bg-transparent">
-                          {col.label}
-                          {renderSortIcon(col.key)}
-                        </Button>
-                      )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {calls.length > 0 ? (
-                calls.map((call) => (
-                  <TableRow key={call.id}>
-                    {columns.map(col => (
-                      <TableCell key={`${call.id}-${String(col.key)}`} className={col.cellClassName}>
-                        {col.render ? col.render(call) : String(call[col.key as keyof Call] ?? '')}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
-            <div className="text-sm text-muted-foreground">
-                Total {calls.length} calls
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Filter calls..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="max-w-sm border-primary dark:border-input"
+            />
+            <div className="flex gap-2 ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <ListFilter className="mr-2 h-4 w-4" /> Filters <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Filter by Appointment Booked</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {uniqueAppointmentStatus.map((status) => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={columnFilters.appointmentBooked.includes(status as 'Yes' | 'No')}
+                      onCheckedChange={() => toggleColumnFilter('appointmentBooked', status as 'Yes' | 'No')}
+                    >
+                      {status}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
+          </div>
+          
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {columns.map(col => 
+                    columnVisibility[String(col.key)] ? (
+                      <TableHead key={String(col.key)} className={`${col.headerClassName || ''} px-1 sm:px-3 py-1`}>
+                        {col.key === 'actions' ? (
+                          <span className="px-0">{col.label}</span>
+                        ) : (
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort(col.key)} 
+                            className="group px-0 hover:bg-transparent"
+                          >
+                            {col.label}
+                            {renderSortIcon(col.key)}
+                          </Button>
+                        )}
+                      </TableHead>
+                    ) : null
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {calls.length > 0 ? (
+                  calls.map((call) => (
+                    <TableRow key={call.id}>
+                      {columns.map(col =>
+                        columnVisibility[String(col.key)] ? (
+                          <TableCell 
+                            key={`${call.id}-${String(col.key)}`} 
+                            className={`${col.cellClassName || ''} px-1 sm:px-3 py-1`}
+                          >
+                            {col.render ? col.render(call) : String(call[col.key as keyof Call] ?? '')}
+                          </TableCell>
+                        ) : null
+                      )}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="text-center">
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="text-sm text-muted-foreground">
+              Total {calls.length} calls
+            </div>
+          </div>
         </div>
       </CardContent>
 
@@ -289,7 +371,9 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
                 <div>
                   <h4 className="font-semibold mb-2 text-foreground">Transcript:</h4>
                   <ScrollArea className="h-[200px] w-full rounded-md border p-4 bg-muted/20">
-                    <pre className="text-sm whitespace-pre-wrap text-foreground">{selectedCall.transcript}</pre>
+                    <pre className="text-sm whitespace-pre-wrap text-foreground">
+                      {selectedCall.transcript}
+                    </pre>
                   </ScrollArea>
                 </div>
               ) : (
@@ -307,7 +391,9 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>Close</Button>
+              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+                Close
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

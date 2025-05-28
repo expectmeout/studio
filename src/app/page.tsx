@@ -127,6 +127,9 @@ export default function DashboardPage() {
   if (!session) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
          <Card className="w-full max-w-sm shadow-xl">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
@@ -147,7 +150,7 @@ export default function DashboardPage() {
                   </defs>
                 </svg>
             </div>
-            <CardTitle className="text-2xl">Welcome to CHANLYTICS</CardTitle>
+            <CardTitle className="text-2xl">Hello, Expert Solutions</CardTitle>
             <CardDescription>Please sign in to access your dashboard.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -179,7 +182,7 @@ export default function DashboardPage() {
               {loginError && (
                 <p className="text-sm text-destructive">{loginError}</p>
               )}
-              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+              <Button type="submit" className="w-full text-[#fafafa]" disabled={isLoggingIn}>
                 {isLoggingIn ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -189,7 +192,7 @@ export default function DashboardPage() {
                     Signing In...
                   </>
                 ) : (
-                  <> <LogIn className="mr-2 h-4 w-4" /> Sign In </>
+                  <> <LogIn className="mr-2 h-4 w-4" /> <span className="text-[#fafafa]">Sign In</span> </>
                 )}
               </Button>
             </form>
