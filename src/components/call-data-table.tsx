@@ -55,7 +55,7 @@ interface CallDataTableProps {
   calls: Call[];
 }
 
-type SortKey = keyof Call | 'actions' | null; // Added 'actions' as a possible key though it won't be sortable
+type SortKey = keyof Call | 'actions' | null;
 type SortDirection = "asc" | "desc";
 
 const CallTypeIcon = ({ type }: { type: Call["callType"] }) => {
@@ -90,9 +90,8 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
   const [sortKey, setSortKey] = React.useState<SortKey>(null);
   const [sortDirection, setSortDirection] = React.useState<SortDirection>("asc");
   const [columnFilters, setColumnFilters] = React.useState<{
-    callType: Call['callType'][];
     appointmentBooked: ('Yes' | 'No')[];
-  }>({ callType: [], appointmentBooked: []});
+  }>({ appointmentBooked: []});
 
   const [selectedCall, setSelectedCall] = React.useState<Call | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
@@ -103,7 +102,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
   };
 
   const handleSort = (key: SortKey) => {
-    if (key === 'actions') return; // Actions column is not sortable
+    if (key === 'actions') return; 
     if (sortKey === key) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -112,7 +111,6 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     }
   };
   
-  const uniqueCallTypes = React.useMemo(() => Array.from(new Set(initialCalls.map(call => call.callType))), [initialCalls]);
   const uniqueAppointmentStatus = ['Yes', 'No'];
 
 
@@ -123,9 +121,6 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
       format(call.callTime, "PPpp").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (columnFilters.callType.length > 0) {
-      filteredCalls = filteredCalls.filter(call => columnFilters.callType.includes(call.callType));
-    }
     if (columnFilters.appointmentBooked.length > 0) {
       filteredCalls = filteredCalls.filter(call => 
         (columnFilters.appointmentBooked.includes('Yes') && call.appointmentBooked) ||
@@ -135,8 +130,8 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
 
     if (sortKey && sortKey !== 'actions') {
       filteredCalls.sort((a, b) => {
-        const valA = a[sortKey as keyof Call]; // Type assertion
-        const valB = b[sortKey as keyof Call]; // Type assertion
+        const valA = a[sortKey as keyof Call];
+        const valB = b[sortKey as keyof Call];
 
         if (valA === null || valA === undefined) return 1;
         if (valB === null || valB === undefined) return -1;
@@ -156,7 +151,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     setCalls(filteredCalls);
   }, [searchTerm, sortKey, sortDirection, initialCalls, columnFilters]);
 
-  const toggleColumnFilter = (filterType: 'callType' | 'appointmentBooked', value: string) => {
+  const toggleColumnFilter = (filterType: 'appointmentBooked', value: string) => {
     setColumnFilters(prev => {
       const currentFilter = prev[filterType] as string[];
       const newFilter = currentFilter.includes(value)
@@ -168,7 +163,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
 
 
   const renderSortIcon = (key: SortKey) => {
-    if (key === 'actions') return null; // No sort icon for actions
+    if (key === 'actions') return null; 
     if (sortKey === key) {
       return sortDirection === "asc" ? <ArrowUpDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" /> : <ArrowUpDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" />;
     }
@@ -211,7 +206,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
             placeholder="Filter calls..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            className="max-w-sm"
+            className="max-w-sm border-primary dark:border-input"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -220,18 +215,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by Call Type</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {uniqueCallTypes.map((type) => (
-                <DropdownMenuCheckboxItem
-                  key={type}
-                  checked={columnFilters.callType.includes(type)}
-                  onCheckedChange={() => toggleColumnFilter('callType', type)}
-                >
-                  {type}
-                </DropdownMenuCheckboxItem>
-              ))}
-              <DropdownMenuLabel className="mt-2">Filter by Appointment Booked</DropdownMenuLabel>
+              <DropdownMenuLabel>Filter by Appointment Booked</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {uniqueAppointmentStatus.map((status) => (
                 <DropdownMenuCheckboxItem
@@ -293,7 +277,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
 
       {selectedCall && (
         <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col dark:bg-card">
             <DialogHeader>
               <DialogTitle>Call Details: {selectedCall.phoneNumber}</DialogTitle>
               <DialogDescription>
