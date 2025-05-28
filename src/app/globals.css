@@ -26,59 +26,63 @@ body {
     --muted: 220 13% 80%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 262 52% 50%; /* Indigo #673AB7 */
-    --accent-foreground: 0 0% 98%; /* White */
+    --accent: 0 0% 90%; /* Light Gray for accent */
+    --accent-foreground: 0 0% 20%; /* Dark Gray text on light gray accent */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 220 13% 88%;
     --input: 220 13% 88%;
-    --ring: 231 48% 48%;
+    --ring: 231 48% 48%; /* Ring color from primary */
 
-    --chart-1: 231 48% 48%;
-    --chart-2: 262 52% 50%;
-    --chart-3: 231 48% 60%;
-    --chart-4: 262 52% 60%;
-    --chart-5: 231 48% 70%;
+    --chart-1: hsl(var(--accent)); /* Light Gray */
+    --chart-2: 0 0% 80%; /* Monochromatic shades */
+    --chart-3: 0 0% 70%;
+    --chart-4: 0 0% 60%;
+    --chart-5: 0 0% 50%;
+    
+    --chart-tooltip-cursor-fill: 220 13% 90%; /* Lighter shade of card for light mode */
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 0 0% 20%; /* Dark Gray #333333 */
+    --background: 0 0% 3.7%; /* #09090B */
     --foreground: 220 13% 95%; /* Light Gray #F0F2F5 */
 
-    --card: 0 0% 20%;
+    --card: 0 0% 12%; /* #1F1F21 */
     --card-foreground: 220 13% 95%;
 
-    --popover: 0 0% 20%;
+    --popover: 0 0% 12%; /* #1F1F21 */
     --popover-foreground: 220 13% 95%;
 
-    --primary: 231 48% 55%; /* Slightly lighter Deep Blue for dark mode */
-    --primary-foreground: 0 0% 98%;
+    --primary: 217 98% 65%; /* Lighter #155DFC for dark mode primary */
+    --primary-foreground: 0 0% 10%; /* Darker text for lighter primary */
 
-    --secondary: 0 0% 25%; /* Slightly lighter dark gray */
+    --secondary: 0 0% 15%; /* Slightly lighter dark gray for secondary */
     --secondary-foreground: 220 13% 95%;
 
-    --muted: 0 0% 30%;
+    --muted: 0 0% 20%;
     --muted-foreground: 220 13% 70%;
 
-    --accent: 262 52% 55%; /* Slightly lighter Indigo for dark mode */
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 0% 90%; /* Light Gray for accent */
+    --accent-foreground: 0 0% 10%; /* Very Dark Gray text on light gray accent */
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 30%;
-    --input: 0 0% 30%;
-    --ring: 231 48% 55%;
+    --border: 0 0% 15%;
+    --input: 0 0% 12%; /* Same as card background */
+    --ring: 217 98% 65%; /* Ring color from primary for dark mode */
 
-    --chart-1: 231 48% 55%;
-    --chart-2: 262 52% 55%;
-    --chart-3: 231 48% 45%;
-    --chart-4: 262 52% 45%;
-    --chart-5: 231 48% 35%;
+    --chart-1: hsl(var(--accent)); /* Light Gray */
+    --chart-2: 0 0% 80%; /* Monochromatic shades */
+    --chart-3: 0 0% 70%;
+    --chart-4: 0 0% 60%;
+    --chart-5: 0 0% 50%;
+
+    --chart-tooltip-cursor-fill: 0 0% 17%; /* #2B2B2B, shade lighter than card bg #1F1F21 */
   }
 }
 
