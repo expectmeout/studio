@@ -36,7 +36,9 @@ body {
     --input: 220 13% 88%;
     --ring: 231 48% 48%; /* Ring color from primary */
 
-    --chart-1: hsl(var(--accent)); /* Light Gray */
+    /* Chart specific colors */
+    --chart-bar-main-color: 217 98% 65%; /* Consistent Blue #155DFC for chart bars */
+    --chart-1: hsl(var(--chart-bar-main-color)); /* Use the main bar color for chart-1 */
     --chart-2: 0 0% 80%; /* Monochromatic shades */
     --chart-3: 0 0% 70%;
     --chart-4: 0 0% 60%;
@@ -76,8 +78,10 @@ body {
     --input: 0 0% 12%; /* Same as card background */
     --ring: 217 98% 65%; /* Ring color from primary for dark mode */
 
-    --chart-1: hsl(var(--accent)); /* Light Gray */
-    --chart-2: 0 0% 80%; /* Monochromatic shades */
+    /* Chart specific colors in dark mode - chart-bar-main-color is inherited from :root */
+    /* --chart-bar-main-color is already defined in :root and will be used here too */
+    --chart-1: hsl(var(--chart-bar-main-color)); /* Use the main bar color for chart-1 */
+    --chart-2: 0 0% 80%; /* Monochromatic shades for dark, could be adjusted if needed */
     --chart-3: 0 0% 70%;
     --chart-4: 0 0% 60%;
     --chart-5: 0 0% 50%;

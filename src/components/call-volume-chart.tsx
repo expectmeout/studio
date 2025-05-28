@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -11,7 +12,7 @@ interface CallVolumeChartProps {
 const chartConfig = {
   calls: {
     label: "Calls",
-    color: "hsl(var(--primary))",
+    color: "hsl(var(--chart-bar-main-color))", // Updated to use the consistent blue color
   },
 } satisfies ChartConfig;
 
@@ -42,9 +43,9 @@ export function CallVolumeChart({ data }: CallVolumeChartProps) {
               allowDecimals={false}
             />
             <Tooltip
-              cursor={{ fill: "hsl(var(--accent) / 0.2)" }}
+              cursor={{ fill: "hsl(var(--chart-tooltip-cursor-fill))" }}
               contentStyle={{
-                backgroundColor: "hsl(var(--background))",
+                backgroundColor: "hsl(var(--card))", // Use card background for tooltip
                 borderColor: "hsl(var(--border))",
                 borderRadius: "var(--radius)",
               }}
