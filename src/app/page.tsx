@@ -196,7 +196,7 @@ export default function DashboardPage() {
           </CardContent>
            <CardFooter className="text-center block">
              <p className="text-xs text-muted-foreground">
-                Don't have an account? <a href="https://supabase.com/dashboard/project/_/auth/users" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Sign up via Supabase.</a>
+                Don&apos;t have an account? <a href="https://chanlytics.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Get started with Chanlytics.</a>
              </p>
           </CardFooter>
         </Card>
@@ -288,3 +288,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
