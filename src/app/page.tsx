@@ -48,7 +48,7 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     async function loadData() {
-      if (session) { // Only load data if user is logged in
+      if (session) { 
         setIsLoadingData(true);
         const fetchedCalls = await fetchAllCalls(30);
         setAllCalls(fetchedCalls);
@@ -63,7 +63,6 @@ export default function DashboardPage() {
         setCallVolumeData(getCallVolumeLastWeek(lastWeekKpiCalls));
         setIsLoadingData(false);
       } else {
-        // Clear data if no session
         setAllCalls([]);
         setCallsLastWeekForKpis([]);
         setTotalCalls(0);
@@ -74,7 +73,7 @@ export default function DashboardPage() {
         setIsLoadingData(false);
       }
     }
-    if (!authIsLoading) { // Wait for auth state to resolve
+    if (!authIsLoading) { 
         loadData();
     }
   }, [session, authIsLoading]);
@@ -88,8 +87,6 @@ export default function DashboardPage() {
     if (error) {
       setLoginError(error.message);
     } else {
-      // Login successful, onAuthStateChange will handle session update
-      // and redirect or UI update will happen via useEffect dependency on session
       setEmail("");
       setPassword("");
     }
@@ -214,13 +211,8 @@ export default function DashboardPage() {
           <h1 className="text-xl font-semibold text-foreground">Call Insight</h1>
         </div>
         <div className="ml-auto flex items-center gap-4">
-          {user && (
+          {user && session && ( // Check for both user and session
             <UserAccountNav
-              user={{ // Adapt Supabase user to the expected structure
-                name: user.user_metadata?.full_name || user.email,
-                email: user.email,
-                image: user.user_metadata?.avatar_url,
-              }}
               onSettingsClick={handleSettings}
               onBillingClick={handleBilling}
             />
@@ -278,3 +270,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

@@ -12,6 +12,7 @@ type AuthContextType = {
   isLoading: boolean;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  updateUserCompanyName: (companyName: string) => Promise<{ error: Error | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,12 +67,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     router.push('/'); // Redirect to home page after logout, which will show login form
   };
 
+  const updateUserCompanyName = async (companyName: string) => {
+    if (!user) return { error: new Error("User not authenticated") };
+    setIsLoading(true);
+    const { data, error } = await supabase.auth.updateUser({
+      data: { company_name: companyName } 
+    });
+
+    if (error) {
+      console.error("Error updating company name:", error.message);
+      setIsLoading(false);
+      return { error };
+    }
+    
+    // Manually update the local user state to reflect the change immediately
+    // Supabase onAuthStateChange might also pick this up, but this ensures UI updates.
+    if (data.user) {
+        setUser(data.user);
+    }
+    
+    setIsLoading(false);
+    return { error: null };
+  };
+
   const value = {
     session,
     user,
     isLoading,
     signInWithPassword,
     signOut,
+    updateUserCompanyName,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -84,3 +109,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

@@ -12,62 +12,65 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCircle, Settings, CreditCard, LogOut as LogOutIcon } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { Settings, CreditCard, LogOut as LogOutIcon } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserAccountNavProps {
-  user: { // This structure is now for display purposes, actual user comes from context
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
   onSettingsClick: () => void;
   onBillingClick: () => void;
-  // onLogoutClick is removed, will use context's signOut
 }
 
 export function UserAccountNav({
-  user,
   onSettingsClick,
   onBillingClick,
 }: UserAccountNavProps) {
-  const { signOut, user: authUser } = useAuth(); // Get signOut and authUser from context
+  const { signOut, user: authUser } = useAuth();
 
-  const getInitials = (name?: string | null) : string => {
-    if (!name) return "";
-    // If email is used as name and contains '@', try to get initials from before '@'
-    if (name.includes('@') && name === authUser?.email) {
-        const emailPrefix = name.split('@')[0];
-        const names = emailPrefix.replace(/[^a-zA-Z\s]/g, ' ').trim().split(/\s+/);
-        if (names.length > 0 && names[0]) {
-            let initials = names[0].substring(0, 1).toUpperCase();
-            if (names.length > 1 && names[names.length -1]) {
-                initials += names[names.length - 1].substring(0, 1).toUpperCase();
-            }
-            return initials;
+  const getInitials = (companyName?: string | null, email?: string | null): string => {
+    if (companyName) {
+      const words = companyName.trim().split(/\s+/);
+      if (words.length > 0 && words[0]) {
+        let initials = words[0].substring(0, 1).toUpperCase();
+        if (words.length > 1 && words[words.length - 1]) {
+          initials += words[words.length - 1].substring(0, 1).toUpperCase();
         }
+        return initials;
+      }
     }
-    // Original logic for names
-    const names = name.split(" ");
-    let initials = names[0].substring(0, 1).toUpperCase();
-    if (names.length > 1 && names[names.length-1]) {
-      initials += names[names.length - 1].substring(0, 1).toUpperCase();
+    if (email) {
+      const emailPrefix = email.split('@')[0];
+      if (emailPrefix) {
+        const nameParts = emailPrefix.replace(/[^a-zA-Z\s.]/g, ' ').trim().split(/[.\s]+/);
+        if (nameParts.length > 0 && nameParts[0]) {
+            let initials = nameParts[0].substring(0, 1).toUpperCase();
+            if (nameParts.length > 1 && nameParts[nameParts.length-1]) {
+                initials += nameParts[nameParts.length - 1].substring(0, 1).toUpperCase();
+            }
+            if (initials.length > 0) return initials;
+        }
+        return email.substring(0, 1).toUpperCase();
+      }
     }
-    return initials;
+    return "U";
   };
   
-  const displayName = user.name || "User";
-  const displayEmail = user.email || "No email";
+  const companyName = authUser?.user_metadata?.company_name;
+  const email = authUser?.email;
+  const avatarUrl = authUser?.user_metadata?.avatar_url;
+
+  const displayName = companyName || email || "User";
+  const displayEmail = email || "No email provided";
+  const avatarFallback = getInitials(companyName, email);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            {user.image ? (
-              <AvatarImage src={user.image} alt={displayName} data-ai-hint="user avatar" />
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="user avatar company" />
             ) : (
-              <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
             )}
           </Avatar>
         </Button>
@@ -91,7 +94,7 @@ export function UserAccountNav({
           <span>Billing</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={signOut}> {/* Use signOut from context */}
+        <DropdownMenuItem onClick={signOut}>
           <LogOutIcon className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>
