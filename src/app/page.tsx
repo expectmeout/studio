@@ -76,8 +76,8 @@ export default function DashboardPage() {
   };
 
   const handleBilling = () => {
-    console.log("Billing clicked");
-    // Placeholder for navigation or modal
+    console.log("Billing clicked - navigating to /billing");
+    router.push('/billing'); // Navigate to billing page
   };
 
   const kpiValue = (value: string | number) => isLoading ? "..." : value;
