@@ -17,29 +17,29 @@ body {
     --popover: 220 13% 95%;
     --popover-foreground: 0 0% 20%;
 
-    --primary: 231 48% 48%; /* Deep Blue #3F51B5 */
+    --primary: 217 98% 65%; /* Specialty Blue #155DFC (was 231 48% 48%) */
     --primary-foreground: 0 0% 98%; /* White */
 
     --secondary: 220 13% 90%; /* Slightly darker light gray */
-    --secondary-foreground: 231 48% 48%;
+    --secondary-foreground: 217 98% 65%; /* Specialty Blue for text on secondary */
 
     --muted: 220 13% 80%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 0 0% 90%; /* Light Gray for accent */
-    --accent-foreground: 0 0% 20%; /* Dark Gray text on light gray accent */
+    --accent: 0 0% 90%; /* Light Gray for accent (was 217 98% 65%) */
+    --accent-foreground: 0 0% 20%; /* Dark Gray text on light gray accent (was 0 0% 10%) */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 220 13% 88%;
     --input: 220 13% 88%;
-    --ring: 231 48% 48%; /* Ring color from primary */
+    --ring: 217 98% 65%; /* Ring color from new primary (was 231 48% 48%) */
 
     /* Chart specific colors */
     --chart-bar-main-color: 217 98% 65%; /* Consistent Blue #155DFC for chart bars */
-    --chart-1: hsl(var(--chart-bar-main-color)); /* Use the main bar color for chart-1 */
-    --chart-2: 0 0% 80%; /* Monochromatic shades */
+    --chart-1: hsl(var(--chart-bar-main-color)); 
+    --chart-2: 0 0% 80%; 
     --chart-3: 0 0% 70%;
     --chart-4: 0 0% 60%;
     --chart-5: 0 0% 50%;
@@ -75,13 +75,12 @@ body {
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 15%;
-    --input: 0 0% 12%; /* Same as card background */
+    --input: 0 0% 12%; /* Same as card background #1F1F21 */
     --ring: 217 98% 65%; /* Ring color from primary for dark mode */
 
     /* Chart specific colors in dark mode - chart-bar-main-color is inherited from :root */
-    /* --chart-bar-main-color is already defined in :root and will be used here too */
-    --chart-1: hsl(var(--chart-bar-main-color)); /* Use the main bar color for chart-1 */
-    --chart-2: 0 0% 80%; /* Monochromatic shades for dark, could be adjusted if needed */
+    --chart-1: hsl(var(--chart-bar-main-color));
+    --chart-2: 0 0% 80%; 
     --chart-3: 0 0% 70%;
     --chart-4: 0 0% 60%;
     --chart-5: 0 0% 50%;
