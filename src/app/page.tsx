@@ -108,9 +108,16 @@ export default function DashboardPage() {
   if (authIsLoading) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 animate-spin text-primary mb-4">
-          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" />
-          <path d="M16.5 16.5A6.5 6.5 0 005.5 5.5" />
+        <svg width="48" height="48" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="h-12 w-12 text-primary mb-4">
+            <rect x="4" y="8" width="8" height="8" rx="2">
+                <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" begin="0s"/>
+            </rect>
+            <rect x="12" y="12" width="8" height="8" rx="2">
+                <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" begin="0.2s"/>
+            </rect>
+            <rect x="20" y="16" width="8" height="8" rx="2">
+                <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" begin="0.4s"/>
+            </rect>
         </svg>
         <p className="text-lg text-muted-foreground">Loading application...</p>
       </div>
