@@ -1,142 +1,117 @@
 "use client";
 
 import * as React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ArrowUpDown,
-  PhoneIncoming,
-  PhoneOutgoing,
-  PhoneMissed,
-  CheckCircle2,
-  XCircle,
-  Star,
-  ChevronDown,
-  ListFilter,
-  FileText,
-  Columns,
-  Download
-} from "lucide-react";
-import type { Call } from "@/lib/data";
-import { formatDuration } from "@/lib/data";
 import { format } from "date-fns";
+import { Star, CheckCircle2, XCircle, ChevronDown, Columns, ListFilter, Play, Download } from "lucide-react";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { 
+  DropdownMenu, 
+  DropdownMenuCheckboxItem, 
+  DropdownMenuContent, 
+  DropdownMenuTrigger, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator 
+} from "./ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
+import { ScrollArea } from "./ui/scroll-area";
+
+// Define the Call type since we're not importing it
+interface Call {
+  id: string;
+  phoneNumber: string;
+  duration: number;
+  callType?: string;  // Optional since we're removing this
+  appointmentBooked: boolean;
+  rating: number;
+  callTime: Date;
+  recordingUrl?: string;
+  transcript?: string;
+}
+
+type SortKey = keyof Omit<Call, 'callType'> | 'actions';
 
 interface CallDataTableProps {
   calls: Call[];
 }
 
-type SortKey = keyof Call | 'actions' | null;
-type SortDirection = "asc" | "desc";
-
-const CallTypeIcon = ({ type }: { type: Call["callType"] }) => {
-  switch (type) {
-    case "Incoming":
-      return <PhoneIncoming className="h-4 w-4 text-green-500" />;
-    case "Outgoing":
-      return <PhoneOutgoing className="h-4 w-4 text-blue-500" />;
-    case "Missed":
-      return <PhoneMissed className="h-4 w-4 text-red-500" />;
-    default:
-      return null;
-  }
+const formatPhoneNumber = (phoneNumber: string): string => {
+  // Simple phone number formatting
+  const cleaned = ('' + phoneNumber).replace(/\D/g, '');
+  const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+  return match ? `(${match[1]}) ${match[2]}-${match[3]}` : phoneNumber;
 };
 
-const RatingStars = ({ rating }: { rating: number }) => (
-  <div className="flex">
-    {[...Array(5)].map((_, i) => (
-      <Star
-        key={i}
-        className={`h-4 w-4 ${
-          i < rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
-        }`}
-      />
-    ))}
-  </div>
-);
+const formatDuration = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
+
+const renderRating = (rating: number) => {
+  return (
+    <div className="flex">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i < rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+          }`}
+        />
+      ))}
+    </div>
+  );
+};
 
 export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
   const [calls, setCalls] = React.useState<Call[]>(initialCalls);
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [sortKey, setSortKey] = React.useState<SortKey>(null);
-  const [sortDirection, setSortDirection] = React.useState<SortDirection>("asc");
+  const [sortKey, setSortKey] = React.useState<SortKey | null>(null);
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("asc");
   const [columnFilters, setColumnFilters] = React.useState<{
     appointmentBooked: ('Yes' | 'No')[];
-  }>({ appointmentBooked: []});
-  
+  }>({ appointmentBooked: [] });
+
   // Responsive column visibility state
-  const [columnVisibility, setColumnVisibility] = React.useState<{
-    [key: string]: boolean;
-  }>({
+  const [columnVisibility, setColumnVisibility] = React.useState<Record<string, boolean>>({
     phoneNumber: true,
     duration: true,
-    callType: true, 
     appointmentBooked: true,
     rating: true,
     callTime: true,
-    actions: true
+    actions: true,
   });
-  
+
   // Set initial visibility based on screen size
   React.useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) { // Mobile breakpoint
         setColumnVisibility({
-          phoneNumber: true,
-          duration: false,
-          callType: false,
-          appointmentBooked: false, // Hide on mobile by default
-          rating: false,
-          callTime: false,
-          actions: true // Show actions (recording) on mobile
+          phoneNumber: true,    // Show phone number
+          duration: false,      // Hide on mobile
+          appointmentBooked: true, // Show appointment status
+          rating: false,        // Hide on mobile
+          callTime: false,      // Hide on mobile
+          actions: true         // Show actions (recording)
         });
       } else {
-        // On desktop, show all columns
+        // On desktop, show all columns except callType
         setColumnVisibility({
           phoneNumber: true,
           duration: true,
-          callType: true,
           appointmentBooked: true,
           rating: true,
           callTime: true,
-          actions: true
+          actions: true,
         });
       }
     };
-    
+
     // Initialize column visibility based on current screen size
     handleResize();
-    
+
     // Listen for window resize events
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -150,7 +125,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
       console.error('No recording URL available');
       return;
     }
-    
+
     try {
       const response = await fetch(call.recordingUrl);
       if (!response.ok) {
@@ -185,14 +160,12 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
       setSortDirection("asc");
     }
   };
-  
-  const uniqueAppointmentStatus = ['Yes', 'No'];
 
+  const uniqueAppointmentStatus = ['Yes', 'No'];
 
   React.useEffect(() => {
     let filteredCalls = initialCalls.filter((call) =>
       call.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      call.callType.toLowerCase().includes(searchTerm.toLowerCase()) ||
       format(call.callTime, "PPpp").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -236,13 +209,14 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     });
   };
 
-
-  const renderSortIcon = (key: SortKey) => {
-    if (key === 'actions') return null; 
+  const renderSortIcon = (key: SortKey | null) => {
+    if (key === 'actions' || key === null) return null; 
     if (sortKey === key) {
-      return sortDirection === "asc" ? <ArrowUpDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" /> : <ArrowUpDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" />;
+      return sortDirection === "asc" ? 
+        <ChevronDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" /> : 
+        <ChevronDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity rotate-180" />;
     }
-    return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />;
+    return <ChevronDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />;
   };
 
   // Add toggle column visibility function with mobile optimization
@@ -253,7 +227,7 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
       const column = columns.find(c => String(c.key) === columnKey);
       
       // If we're on mobile and trying to hide a high priority column when we're at the minimum
-      if (window.innerWidth < 768 && 
+      if (typeof window !== 'undefined' && window.innerWidth < 768 && 
           column?.priority === 'high' && 
           visibleCount <= 3 && 
           prev[columnKey]) {
@@ -266,39 +240,69 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
       };
     });
   };
-  
+
   // Define column properties with a new 'priority' field
-  const columns: { 
-    key: SortKey; 
-    label: string; 
-    headerClassName?: string; 
-    cellClassName?: string; 
-    render?: (call:Call) => React.ReactNode;
-    priority?: 'high' | 'medium' | 'low'; // High priority columns show on all devices
+  const columns: {
+    key: SortKey;
+    label: string;
+    priority: 'high' | 'medium' | 'low';
+    render: (call: Call) => React.ReactNode;
+    headerClassName?: string;
+    cellClassName?: string;
   }[] = [
-    { key: "phoneNumber", label: "Phone", headerClassName: "w-[120px] sm:w-auto", priority: 'high' },
-    { key: "duration", label: "Duration", render: (call) => formatDuration(call.duration), priority: 'low' },
-    { key: "callType", label: "Type", render: (call) => (
-      <div className="flex items-center gap-1 sm:gap-2">
-        <CallTypeIcon type={call.callType} />
-        <span className="hidden sm:inline">{call.callType}</span>
-      </div>
-    ), priority: 'medium' },
-    { key: "appointmentBooked", label: "Appt", render: (call) => (
-      call.appointmentBooked ? <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" /> : <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
-    ), priority: 'high' },
-    { key: "rating", label: "Rating", render: (call) => call.rating > 0 ? <RatingStars rating={call.rating} /> : <span className="text-muted-foreground">N/A</span>, priority: 'low' },
-    { key: "callTime", label: "Time", render: (call) => format(call.callTime, "MMM d, h:mm a"), headerClassName: "w-[150px] sm:w-[200px]", priority: 'medium' },
-    { 
-      key: "actions", 
-      label: "Recording", 
+    {
+      key: 'phoneNumber',
+      label: 'Phone Number',
       priority: 'high',
+      render: (call: Call) => <div className="font-medium">{formatPhoneNumber(call.phoneNumber)}</div>,
+      headerClassName: 'w-[120px] sm:w-auto',
+      cellClassName: ''
+    },
+    { 
+      key: 'duration', 
+      label: 'Duration', 
+      render: (call: Call) => formatDuration(call.duration), 
+      priority: 'low' 
+    },
+    { 
+      key: 'appointmentBooked', 
+      label: 'Appt', 
       render: (call: Call) => (
-        <Button variant="outline" size="sm" onClick={() => handleViewDetails(call)}>
-          <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          <span className="text-xs sm:text-sm">View</span>
+        call.appointmentBooked ? 
+          <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" /> : 
+          <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+      ), 
+      priority: 'high' 
+    },
+    { 
+      key: 'rating', 
+      label: 'Rating', 
+      render: (call: Call) => renderRating(call.rating), 
+      priority: 'low' 
+    },
+    { 
+      key: 'callTime', 
+      label: 'Time', 
+      render: (call: Call) => format(call.callTime, 'MMM d, h:mm a'), 
+      priority: 'medium',
+      headerClassName: 'w-[150px] sm:w-[200px]'
+    },
+    { 
+      key: 'actions', 
+      label: 'Recording', 
+      render: (call: Call) => (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 w-8 p-0"
+          onClick={() => handleViewDetails(call)}
+        >
+          <Play className="h-4 w-4" />
         </Button>
-      )
+      ),
+      priority: 'high',
+      headerClassName: 'text-right',
+      cellClassName: 'text-right'
     },
   ];
 
