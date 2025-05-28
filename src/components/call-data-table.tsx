@@ -111,16 +111,15 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
   React.useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) { // Mobile breakpoint
-        setColumnVisibility(prev => ({
-          ...prev,
-          phoneNumber: true,     // Always show on mobile
-          duration: false,       // Hide on mobile
-          callType: false,       // Hide on mobile
-          appointmentBooked: true, // Always show on mobile
-          rating: false,         // Hide on mobile
-          callTime: false,       // Hide on mobile
-          actions: true          // Always show on mobile
-        }));
+        setColumnVisibility({
+          phoneNumber: true,
+          duration: false,
+          callType: false,
+          appointmentBooked: false, // Hide on mobile by default
+          rating: false,
+          callTime: false,
+          actions: true // Show actions (recording) on mobile
+        });
       } else {
         // On desktop, show all columns
         setColumnVisibility({
@@ -277,26 +276,27 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
     render?: (call:Call) => React.ReactNode;
     priority?: 'high' | 'medium' | 'low'; // High priority columns show on all devices
   }[] = [
-    { key: "phoneNumber", label: "Phone Number", headerClassName: "w-[180px]", priority: 'high' },
+    { key: "phoneNumber", label: "Phone", headerClassName: "w-[120px] sm:w-auto", priority: 'high' },
     { key: "duration", label: "Duration", render: (call) => formatDuration(call.duration), priority: 'low' },
-    { key: "callType", label: "Call Type", render: (call) => (
-      <div className="flex items-center gap-2">
+    { key: "callType", label: "Type", render: (call) => (
+      <div className="flex items-center gap-1 sm:gap-2">
         <CallTypeIcon type={call.callType} />
-        {call.callType}
+        <span className="hidden sm:inline">{call.callType}</span>
       </div>
     ), priority: 'medium' },
-    { key: "appointmentBooked", label: "Appointment", render: (call) => (
-      call.appointmentBooked ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />
+    { key: "appointmentBooked", label: "Appt", render: (call) => (
+      call.appointmentBooked ? <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" /> : <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
     ), priority: 'high' },
     { key: "rating", label: "Rating", render: (call) => call.rating > 0 ? <RatingStars rating={call.rating} /> : <span className="text-muted-foreground">N/A</span>, priority: 'low' },
-    { key: "callTime", label: "Call Time", render: (call) => format(call.callTime, "MMM d, yyyy HH:mm"), headerClassName: "w-[200px]", priority: 'medium' },
+    { key: "callTime", label: "Time", render: (call) => format(call.callTime, "MMM d, h:mm a"), headerClassName: "w-[150px] sm:w-[200px]", priority: 'medium' },
     { 
       key: "actions", 
       label: "Recording", 
       priority: 'high',
       render: (call: Call) => (
         <Button variant="outline" size="sm" onClick={() => handleViewDetails(call)}>
-          <FileText className="mr-2 h-4 w-4" /> View
+          <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="text-xs sm:text-sm">View</span>
         </Button>
       )
     },
@@ -309,18 +309,18 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <Input
               placeholder="Filter calls..."
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              className="max-w-sm border-primary dark:border-input"
+              className="w-full sm:max-w-sm border-primary dark:border-input hidden sm:block" // Hide on mobile
             />
-            <div className="flex gap-2 ml-auto">
+            <div className="flex gap-2 w-full sm:w-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <Columns className="mr-2 h-4 w-4" /> Columns
+                  <Button variant="outline" size="sm" className="text-xs sm:text-sm flex-grow sm:flex-grow-0">
+                    <Columns className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Columns
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[200px]">
@@ -335,15 +335,15 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
                       disabled={column.priority === 'high' && 
                         Object.values(columnVisibility).filter(v => v).length <= 3}
                     >
-                      {String(column.key).replace(/([A-Z])/g, ' $1').trim()}
+                      {column.label}
                     </DropdownMenuCheckboxItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <ListFilter className="mr-2 h-4 w-4" /> Filters <ChevronDown className="ml-2 h-4 w-4" />
+                  <Button variant="outline" size="sm" className="text-xs sm:text-sm flex-grow sm:flex-grow-0">
+                    <ListFilter className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Filters <ChevronDown className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -364,52 +364,52 @@ export function CallDataTable({ calls: initialCalls }: CallDataTableProps) {
           </div>
           
           <div className="rounded-md border overflow-x-auto">
-            <Table>
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
-                  {columns.map(col => 
-                    columnVisibility[String(col.key)] ? (
-                      <TableHead key={String(col.key)} className={`${col.headerClassName || ''} px-1 sm:px-3 py-1`}>
-                        {col.key === 'actions' ? (
-                          <span className="px-0">{col.label}</span>
-                        ) : (
-                          <Button 
-                            variant="ghost" 
-                            onClick={() => handleSort(col.key)} 
-                            className="group px-0 hover:bg-transparent"
-                          >
-                            {col.label}
-                            {renderSortIcon(col.key)}
-                          </Button>
-                        )}
-                      </TableHead>
-                    ) : null
-                  )}
+              {columns.map(col => 
+                columnVisibility[String(col.key)] ? (
+                  <TableHead key={String(col.key)} className={`${col.headerClassName || ''} px-1 sm:px-3 py-1 whitespace-nowrap`}>
+                    {col.key === 'actions' ? (
+                      <span className="px-0">{col.label}</span>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleSort(col.key)} 
+                        className="group px-0 hover:bg-transparent"
+                      >
+                        {col.label}
+                        {renderSortIcon(col.key)}
+                      </Button>
+                    )}
+                  </TableHead>
+                ) : null
+              )}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {calls.length > 0 ? (
-                  calls.map((call) => (
-                    <TableRow key={call.id}>
-                      {columns.map(col =>
-                        columnVisibility[String(col.key)] ? (
-                          <TableCell 
-                            key={`${call.id}-${String(col.key)}`} 
-                            className={`${col.cellClassName || ''} px-1 sm:px-3 py-1`}
-                          >
-                            {col.render ? col.render(call) : String(call[col.key as keyof Call] ?? '')}
-                          </TableCell>
-                        ) : null
-                      )}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="text-center">
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
+            {calls.length > 0 ? (
+              calls.map((call) => (
+                <TableRow key={call.id}>
+                  {columns.map(col =>
+                    columnVisibility[String(col.key)] ? (
+                      <TableCell 
+                        key={`${call.id}-${String(col.key)}`} 
+                        className={`${col.cellClassName || ''} px-1 sm:px-3 py-1 whitespace-nowrap`}
+                      >
+                        {col.render ? col.render(call) : String(call[col.key as keyof Call] ?? '')}
+                      </TableCell>
+                    ) : null
+                  )}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
               </TableBody>
             </Table>
           </div>
